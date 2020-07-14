@@ -108,6 +108,7 @@ MongoClient.connect( processEnv.MONGODB_URI || '', {useUnifiedTopology: true} ).
 	app.post('/subs/post',
 		bodyParser.urlencoded({extended:false, limit: '10kb'}),
 		subsController.addEmailPOST);
+	app.post('/subs/sendMailing', subsController.sendMailing);
 	// app.get('/api/v0.1/subs/email/getAll', subsController.getAll); // TODO: kept for later if we create a "subscription" management page.
 
 
