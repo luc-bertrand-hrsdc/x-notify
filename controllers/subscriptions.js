@@ -257,7 +257,7 @@ exports.addEmailPOST = async ( req, res, next ) => {
 				});
 
 				// Send confirm email - async
-				sendNotifyConfirmEmail( email, confirmCode.toHexString(), tId, nKey );
+				sendNotifyConfirmEmail( email, topic.confirmURL+confirmCode+"/"+_subsLinkSuffix, tId, nKey );
 				
 				if ( _bypassSubscode ) {
 					res.subscode = confirmCode.toHexString();
@@ -633,7 +633,7 @@ resendEmailNotify = ( email, topicId, currDate ) => {
 			// To support deprecated query where the email was included in the URL, the subsequent URL can be made permanent after 60 days of it's deployment date
 			let subscode = ( docValue.subscode.length ? docValue.subscode : docValue.subscode.toHexString() );
 			
-			await docValue && sendNotifyConfirmEmail( email, subscode, docValue.tId, docValue.nKey );
+			await docValue && sendNotifyConfirmEmail( email, topic.confirmURL+confirmCode+"/"+_subsLinkSuffix, tId, nKey );
 
 			
 		})
