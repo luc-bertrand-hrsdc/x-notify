@@ -10,7 +10,6 @@ const NotifyClient = require('notifications-node-client').NotifyClient; // https
 const entities = require("entities");
 const ObjectId = require('mongodb').ObjectId;
 const Queue = require('bull');
-const { setQueues } = require('bull-board');
 const chalk = require('chalk');
 
 const dbConn = module.parent.exports.dbConn;
@@ -42,14 +41,9 @@ const notifyQueue = new Queue('sendMail',
 			}
 		}
 		);
-setQueues([notifyQueue]);
-const { UI } = require('bull-board');
-const server = require('../server.js');
-server.use('/admin/queues', UI);
 
 notifyQueue.process(async job => {
 	return await sendEmailViaNotify(job.data.email, job.data.templateId, job.data.personalisation, job.data.notifyKey);
-	
 })
 
 let notifyCached = [],
@@ -127,9 +121,9 @@ exports.addEmail = async ( req, res, next ) => {
 				}).then( async ( docSExist ) => {
 			// The email is not subscribed for that topic
 			// Generate an simple Unique Code
-			const confirmCode = docSExist.insertedId,
-			tId = topic.templateId,
-			nKey = topic.notifyKey;
+			const confirmCode	= docSExist.insertedId,
+						tId 	= topic.templateId,
+						nKey 	= topic.notifyKey;
 
 			// Insert in subsUnconfirmed
 			await dbConn.collection( "subsUnconfirmed" ).insertOne( {
@@ -147,7 +141,7 @@ exports.addEmail = async ( req, res, next ) => {
 			});
 
 			// Send confirm email - async
-			sendNotifyConfirmEmail( email, topic.confirmURL+confirmCode+"/"+_subsLinkSuffix, tId, nKey );
+			sendNotifyConfirmEmail( email, topic.confirmURL + confirmCode + "/" + _subsLinkSuffix, tId, nKey );
 
 			if ( _bypassSubscode ) {
 				res.subscode = confirmCode.toHexString();
@@ -156,7 +150,6 @@ exports.addEmail = async ( req, res, next ) => {
 			res.json( _successJSO );
 
 		}).catch( ( ) => {
-			
 			// The email was either subscribed-pending or subscribed confirmed
 			resendEmailNotify( email, topicId, currDate );
 			res.json( _successJSO );
@@ -224,7 +217,7 @@ exports.addEmailPOST = async ( req, res, next ) => {
 			res.redirect( topic.inputErrURL );
 			return;
 		}
-
+		
 		// URL Decrypt the email. It is double encoded like: "&amp;#39;" should be "&#39;" which should be "'"
 		email = await entities.decodeXML( await entities.decodeXML( email ) );
 
@@ -234,7 +227,6 @@ exports.addEmailPOST = async ( req, res, next ) => {
 				e: email,
 				t: topicId
 			}).then( async ( docSExist ) => {
-
 				// The email is not subscribed for that topic
 				// Generate an simple Unique Code
 				const confirmCode = docSExist.insertedId,
@@ -257,7 +249,7 @@ exports.addEmailPOST = async ( req, res, next ) => {
 				});
 
 				// Send confirm email - async
-				sendNotifyConfirmEmail( email, topic.confirmURL+confirmCode+"/"+_subsLinkSuffix, tId, nKey );
+				sendNotifyConfirmEmail( email, topic.confirmURL + confirmCode + "/" + _subsLinkSuffix, tId, nKey );
 				
 				if ( _bypassSubscode ) {
 					res.subscode = confirmCode.toHexString();
@@ -632,8 +624,7 @@ resendEmailNotify = ( email, topicId, currDate ) => {
 
 			// To support deprecated query where the email was included in the URL, the subsequent URL can be made permanent after 60 days of it's deployment date
 			let subscode = ( docValue.subscode.length ? docValue.subscode : docValue.subscode.toHexString() );
-			
-			await docValue && sendNotifyConfirmEmail( email, topic.confirmURL+confirmCode+"/"+_subsLinkSuffix, tId, nKey );
+			await docValue && sendNotifyConfirmEmail( email, docValue.cURL + subscode + "/" + _subsLinkSuffix, docValue.tId, docValue.nKey );
 
 			
 		})
@@ -697,7 +688,7 @@ getRedirectForRecents = async ( query, mustBeSubscribed ) => {
 // Send an email through Notify API
 //
 sendEmailViaNotify = async ( email, templateId, personalisation, notifyKey ) => {
-	let confirmCode = personalisation.confirm_link ? personalisation.confirm_link : null;
+	let confirmCode = personalisation.confirm_link || null;
 	
 	if ( !notifyKey || !templateId || !email || !personalisation ) {
 		return true;
@@ -710,7 +701,7 @@ sendEmailViaNotify = async ( email, templateId, personalisation, notifyKey ) => 
 
 
 	if ( !notifyClient ) {
-		console.log("Creating new notifyClient-> \n\tnotifyEndPoint: " + _notifyEndPoint + "\n\tnotifyKey: " + notifyKey);
+		//console.log("Creating new notifyClient-> \n\tnotifyEndPoint: " + _notifyEndPoint + "\n\tnotifyKey: " + notifyKey);
 		notifyClient = new NotifyClient( _notifyEndPoint, notifyKey );
 		notifyCached[ notifyKey ] = notifyClient;
 		notifyCachedIndexes.push( notifyKey );
@@ -1080,6 +1071,7 @@ exports.simulateAddPost = async ( req, res, next ) => {
 			}
 		}, {
 			redirect: function(){}
+			//this function is forthcoming in the My Mailing management
 		} );
 	
 	res.json( { test: "ok" } );

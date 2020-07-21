@@ -1,8 +1,6 @@
 /**
  * Module dependencies.
  */
-
-
 const express = require('express'); // HTTP server
 const compression = require('compression'); // gzip for the HTTP body
 const cors = require('cors'); // CORS
@@ -24,6 +22,7 @@ const bodyParser = require('body-parser');
 //const crypto = require('crypto'); // To encrypt Notify keys
 
 const MongoClient = require('mongodb').MongoClient;
+const notifyQueue = require('./notifyQueue.js');
 
 const processEnv = process.env;
 
@@ -167,6 +166,12 @@ MongoClient.connect( processEnv.MONGODB_URI || '', {useUnifiedTopology: true} ).
 		cors(_corsSettings),
 		bodyParser.urlencoded({extended:false, limit: '10kb'}),
 		smtpController.sendMailPOST);
+
+	/**
+	 * Bull routes
+	 */
+	app.use('/admin/queues', notifyQueue.UI);
+
 
 	/**
 	 * JWT Authentication
