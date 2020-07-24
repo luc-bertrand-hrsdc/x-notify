@@ -14,6 +14,8 @@ const path = require('path');
 const chalk = require('chalk'); // To color message in console log 
 
 const passport = require('passport'); // Authentication	 
+const session = require('express-session');
+const MongoStore = require('connect-mongo')(session);
 const BasicStrategy = require('passport-http').BasicStrategy;
 
 const jwt = require('jsonwebtoken'); // JWT Authentication
@@ -34,6 +36,9 @@ dotenv.config({
 });
 
 const _corsSettings = JSON.parse(processEnv.cors || '{"optionSucessStatus":200}');	// Parse CORS settings
+
+const _baseFolder = process.env.baseFolder || ""; 
+
 
 // 
 // HTTP auth
@@ -71,7 +76,9 @@ MongoClient.connect( processEnv.MONGODB_URI || '', {useUnifiedTopology: true} ).
 	const subsController = require('./controllers/subscriptions');
 	const managersController = require('./controllers/managers');
 	const smtpController = require('./controllers/sendsmtp');
-
+	const adminController = require('./controllers/admin');
+	const mailingController = require('./controllers/mailing_view');
+	const userController = require('./controllers/user');
 	
 
 	/**
@@ -115,6 +122,28 @@ MongoClient.connect( processEnv.MONGODB_URI || '', {useUnifiedTopology: true} ).
 	/**
 	 * Manager routes.
 	 */
+	app.get('/api/v0.1/t-manager/:accessCode/home',
+		passport.authenticate('basic', { session: false }),
+		managersController.serveHome);
+	app.post('/api/v0.1/t-manager/:accessCode/topic',
+		passport.authenticate('basic', { session: false }),
+		bodyParser.urlencoded({extended:false, limit: '10kb'}),
+		managersController.createTopic);
+	app.get('/api/v0.1/t-manager/:accessCode/:topicId',
+		passport.authenticate('basic', { session: false }),
+		managersController.getTopic);
+	app.put('/api/v0.1/t-manager/:accessCode/:topicId',
+		passport.authenticate('basic', { session: false }),
+		managersController.modifyTopic);
+	app.get('/api/v0.1/t-manager/:accessCode/:topicId/modSuccess',
+		passport.authenticate('basic', { session: false }),
+		managersController.showModSuccess);
+	app.delete('/api/v0.1/t-manager/:accessCode/:topicId/',
+		passport.authenticate('basic', { session: false }),
+		managersController.deleteTopic);
+	app.get('/api/v0.1/t-manager/:accessCode/:topicId/deleteSuccess',
+		passport.authenticate('basic', { session: false }),
+		managersController.showDeleteSuccess);
 	//app.param('/api/v0.1/t-manager/:code/:topic', managersController.validateCodeTopic);
 	app.get('/api/v0.1/t-manager/:accessCode/:topicId/list',
 		passport.authenticate('basic', { session: false }),
@@ -157,6 +186,63 @@ MongoClient.connect( processEnv.MONGODB_URI || '', {useUnifiedTopology: true} ).
 		passport.authenticate('basic', { session: false }),
 		smtpController.flushCacheSMTP,
 		subsController.flushCache);
+	
+	
+	app.use(session({
+		resave: true,
+		saveUninitialized: true,
+		secret: process.env.SESSION_SECRET || "shhhut",
+		cookie: {
+			maxAge: 1209600000
+		}, // two weeks in milliseconds
+		store: new MongoStore({
+			url: process.env.MONGODB_URI,
+			autoReconnect: true,
+		})
+	}));
+	app.use(passport.initialize());
+	app.use(passport.session());
+	
+	
+	app.get( '/api/v1/mailing/login', mailingController.v_mailingLogin );
+	app.get( '/api/v1/mailing/logout', userController.logout );
+	app.post( '/api/v1/mailing/login',
+		bodyParser.urlencoded({extended:true, limit: '50k'}),
+		passport.authenticate('local', { successRedirect: _baseFolder + '/api/v1/mailing/manage', failureRedirect: _baseFolder + '/api/v1/mailing/login'} ) );
+
+		
+	app.get('/api/v1/mailing/manage',
+		userController.isAuthenticated,
+		bodyParser.urlencoded({extended:true, limit: '250k'}),
+		mailingController.v_mailingManage);
+	app.post('/api/v1/mailing/create',
+		userController.isAuthenticated,
+		bodyParser.urlencoded({extended:true, limit: '250k'}),
+		mailingController.v_mailingCreate);
+	app.get('/api/v1/mailing/:mailingid/edit',
+		userController.isAuthenticated,
+		bodyParser.urlencoded({extended:true, limit: '250k'}),
+		mailingController.v_mailingEdit);
+	app.post('/api/v1/mailing/:mailingid/edit',
+		userController.isAuthenticated,
+		bodyParser.urlencoded({extended:true, limit: '1024k'}),
+		mailingController.v_mailingSave);
+	
+	app.get('/api/v1/mailing/:mailingid/history',
+		userController.isAuthenticated,
+		mailingController.v_mailingHistory);
+	app.get('/api/v1/mailing/:mailingid/approval',
+		userController.isAuthenticated,
+		mailingController.v_mailingApproval);
+	app.get('/api/v1/mailing/:mailingid/approved',
+		userController.isAuthenticated,
+		mailingController.v_mailingApproved);
+	app.get('/api/v1/mailing/:mailingid/cancel',
+		userController.isAuthenticated,
+		mailingController.v_mailingCancelled);
+	app.get('/api/v1/mailing/:mailingid/sendToSubs',
+		userController.isAuthenticated,
+		mailingController.v_mailingSendToSub);
 	
 	/**
 	 * SMTP Mail routes.
@@ -217,6 +303,10 @@ MongoClient.connect( processEnv.MONGODB_URI || '', {useUnifiedTopology: true} ).
 	//}); 
 }).catch( (e) => { console.log( "%s MongoDB ERRROR: %s", chalk.red('✗'), e ) } );
 
+process.once('SIGUSR2', function () {
+  console.log( "+++++++++++++++++++ restart +++++++++++");
+    process.kill(process.pid, 'SIGUSR2');
+  
+});
+
 module.exports = app;
-
-
