@@ -674,22 +674,14 @@ exports.getTopic = async ( req, res, next ) => {
 	});
 
 	if(doc === null){
-		res.status( 200 ).send( '<!DOCTYPE html>\n' +
-			'<html lang="en">\n' +
-			'<head>\n' +
-			'	<title>Topic Not Found</title>\n' +
-			'</head>\n' +
-			'<body>\n' +
-			'	Unable to find topic\n' +
-			'	<p>\n' +
-			'	<form action="/api/v0.1/t-manager/' + accessCode + '/topic" method="get">\n' +
-			'		<label for"topicId">Topic Id:</label><br>\n' +	
-			'		<input type="text" id="topicId" name="topicId" required><br><br>\n' +
-			'		<input type="submit" value="GET">\n' +
-			'	</form>\n' +
-			'</body>\n' +
-			'</html>' 
+		let topicNotFound = await fsPromises.readFile('./views/topic.get.not.found.mustache', 'UTF-8');
+		topicNotFound = mustache.render(topicNotFound,
+								{
+									accessCode: accessCode,
+								}
 		);
+		
+		res.status( 200 ).send(topicNotFound);
 	}else{
 		var topicDetailsTemplate = await fsPromises.readFile('views/topic_details.mustache', 'UTF-8');
 		topicDetailsTemplate = mustache.render(topicDetailsTemplate,
