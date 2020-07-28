@@ -28,7 +28,7 @@ const _unsubBaseURL = process.env.removeURL || "https://apps.canada.ca/x-notify/
 // @return; a CSV text response 
 //
 exports.getTopicSubs = async ( req, res, next ) => {
-	
+
 	// Ensure the user is authorized and get the topicId
 	let topicDetails = await isAuthorizedToDownload( req, "list"),
 		currDate = new Date();
@@ -43,10 +43,18 @@ exports.getTopicSubs = async ( req, res, next ) => {
 	
 	// Count the number of confirmed
 	nbConfirmed = await getNumberConfirmed( topicId, { limit: _minBeforeToUploadOnly + 1 } );
-	
+
 	// If more than 50
 	if ( nbConfirmed >= _minBeforeToUploadOnly ) {
-		res.status( 200 ).send( await getFormToUploadList( topicId, req.originalUrl ) );
+		
+		let downloadLargeSubsList = await fsPromises.readFile('./views/download.50k.plus.subscribers.form.mustache', 'UTF-8');
+		downloadLargeSubsList = mustache.render(downloadLargeSubsList,
+								{
+									topicId: topicId,
+								}
+		);
+
+		res.status( 200 ).send(downloadLargeSubsList);
 		res.end();
 		return;
 	}
@@ -69,18 +77,21 @@ exports.uploadTopicSubs = async ( req, res, next ) => {
 	
 	// Ensure the user is authorized and get the topicId
 	let topicDetails = await isAuthorizedToDownload( req, "list-upload");
-
+	
 	if ( !topicDetails ) {
 		res.json( { statusCode: 401, nal: 1 } );
 		res.end()
 		return;
 	}
 
-	// Get the post URL and remove the ending "-upload"
-	let url = req.originalUrl;
-	url = await url.substring( 0, url.length - 7 );
+	let downloadLargeSubsList = await fsPromises.readFile('./views/download.50k.plus.subscribers.form.mustache', 'UTF-8');
+	downloadLargeSubsList = mustache.render(downloadLargeSubsList,
+							{
+								topicId: topicDetails.topicId,
+							}
+	);
 	
-	res.status( 200 ).send( await getFormToUploadList( topicDetails.topicId, url ) );
+	res.status( 200 ).send(downloadLargeSubsList);
 	res.end();
 };
 
@@ -129,17 +140,18 @@ exports.getTopicOver50kSubs = async ( req, res, next ) => {
 		Body: csv
 	};
 
-	s3.upload(s3Params, function(s3Err, data) {
+	s3.upload(s3Params, async function(s3Err, data) {
 		if ( s3Err ) {
 			console.log( s3Err );
 			return;
 		}
-
+	
 		//
 		// Send confirmation email
 		//
 		let cdsNotifyClient = new NotifyClient( process.env.CDS_NOTIFY_END_POINT, process.env.CDS_NOTIFY_KEY );
 		let email_to = JSON.parse( process.env.CDS_NOTIFY_SEND_EMAIL_TO || "[]" );
+
 		email_to.forEach( ( emailGOC ) => {
 			cdsNotifyClient.sendEmail( process.env.CDS_NOTIFY_TEMPLATE_ID, emailGOC,
 				{
@@ -152,19 +164,16 @@ exports.getTopicOver50kSubs = async ( req, res, next ) => {
 				});
 		});
 		
-		res.status( 200 ).send( '<!DOCTYPE html>\n' +
-			'<html lang="en">\n' +
-			'<head>\n' +
-			'<title>Download subscriber for:' + topicId + '</title>\n' +
-			'</head>\n' +
-			'<body>\n' +
-			'	<h1>Download subscriber</h1>\n' +
-			'	<p>For: <strong>' + topicId + '</strong> as from <em>' + currDate.toString() + '</em></p>\n' +
-			'	<p>Filename uploaded: ' + filenameUpload + '</p>\n' +
-			'	<p>Note: An email was directly sent to CDS about your request. Please contact them to pursue your request.</p>\n' +
-			'</body>\n' +
-			'</html>' 
+		let upload50KSuccess = await fsPromises.readFile('./views/upload50KSuccess.mustache', 'UTF-8');
+		upload50KSuccess = mustache.render(upload50KSuccess,
+								{
+									topicId: topicId,
+									currDate: currDate.toString(),
+									filenameUpload: filenameUpload
+								}
 		);
+
+		res.status( 200 ).send(upload50KSuccess);
 		res.end();
 	})
 	
@@ -368,29 +377,6 @@ getConfirmedSubscriberAsCSV = async ( topicId ) => {
 		count: i_len
 	};
 };
-
-//
-// get HTML form to initiate the upload to notify
-//
-getFormToUploadList = ( topicId, url ) => {
-
-	return '<!DOCTYPE html>\n' +
-			'<html lang="en">\n' +
-			'<head>\n' +
-			'<title>Download subscriber for:' + topicId + '</title>\n' +
-			'</head>\n' +
-			'<body>\n' +
-			'	<h1>Download 50k+ subscriber</h1>\n' +
-			'<form action="list" method="post">\n' +
-			'	<p>Please provide the <strong>Notify template ID</strong> to use for your mailing.\n' +
-			'	<label>Notify Template ID: <input type="text" name="notifyTmplId" /></label>\n' +
-			'	<button type="submit">Submit</button>\n' +
-			'</form>\n' +
-			'</body>\n' +
-			'</html>';
-}
-
-
 
 //
 // prompt users with a form
