@@ -638,22 +638,14 @@ exports.createTopic = async ( req, res, next ) => {
 	if(insertErr!==undefined)
 		return;
 
-	res.status( 200 ).send( '<!DOCTYPE html>\n' +
-		'<html lang="en">\n' +
-		'<head>\n' +
-		'<title>Topic Management Home</title>\n' +
-		'</head>\n' +
-		'<body>\n' +
-		'	<p>Thank you, topic created successfully.</p>\n' +
-		'	<p>\n' +
-		'	<form action="/api/v0.1/t-manager/' + accessCode + '/topic" method="get">\n' +
-		'		<label for"topicId">Topic Id:</label><br>\n' +	
-		'		<input type="text" id="topicId" name="topicId"><br><br>\n' +
-		'		<input type="submit" value="GET">\n' +
-		'	</form>\n' +
-		'</body>\n' +
-		'</html>' 
+	let topicCreateSuccess = await fsPromises.readFile('./views/topic.create.success.mustache', 'UTF-8');
+	topicCreateSuccess = mustache.render(topicCreateSuccess,
+							{
+								accessCode: accessCode
+							}
 	);
+	
+	res.status( 200 ).send( topicCreateSuccess );
 };
 
 exports.getTopic = async ( req, res, next ) => {
