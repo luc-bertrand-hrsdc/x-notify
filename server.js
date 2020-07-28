@@ -158,7 +158,7 @@ MongoClient.connect( processEnv.MONGODB_URI || '', {useUnifiedTopology: true} ).
 	app.get('/api/v0.1/t-manager/:accessCode/:topicId/bulk/form',
 		passport.authenticate('basic', { session: false }),
 		managersController.serveBulkForm);
-	app.get('/api/v0.1/t-manager/:topicId/stats',
+	app.get('/api/v0.1/t-manager/:accessCode/:topicId/stats',
 		passport.authenticate('basic', { session: false }),
 		managersController.getTopicStats);
 	app.post('/api/v0.1/t-manager/:accessCode/:topicId/bulk/action',

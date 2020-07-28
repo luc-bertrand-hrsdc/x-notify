@@ -186,7 +186,6 @@ exports.getTopicOver50kSubs = async ( req, res, next ) => {
 // @return; a simple page with the stats 
 //
 exports.getTopicStats = async ( req, res, next ) => {
-	
 	// Params: topicId
 	const { topicId } = req.params,
 		currDate = new Date(),
@@ -202,24 +201,18 @@ exports.getTopicStats = async ( req, res, next ) => {
 		}
 	);
 	
-	// Return the data
-	res.status( 200 ).send( '<!DOCTYPE html>\n' +
-		'<html lang="en">\n' +
-		'<head>\n' +
-		'<title>Cumulative subscription</title>\n' +
-		'</head>\n' +
-		'<body>\n' +
-		'	<h1>Cumulative subscription</h1>\n' +
-		'	<p>For: <strong>' + topicId + '</strong> as from <em>' + currDate.toString() + '</em></p>\n' +
-		'	<dl>\n' +
-		'		<dt>Confirmed</dt>\n' +   
-		'		<dd>' + ( nbConfirmed || 'N/A' ) +'<dd>\n' +
-		'		<dt>Awaiting email confirmation</dt>\n' +   
-		'		<dd>' + ( nbUnconfirmed || 'N/A' ) +'<dd>\n' +
-		'	</dl>\n' +
-		'</body>\n' +
-		'</html>' 
+	let topicStats = await fsPromises.readFile('views/topic.stats.mustache', 'UTF-8');
+	topicStats = mustache.render(topicStats,
+							{
+								topicId: topicId,
+								currDate: currDate,
+								nbConfirmed: nbConfirmed || 'N/A',
+								nbUnconfirmed: nbUnconfirmed || 'N/A'
+							}
 	);
+
+	// Return the data
+	res.status( 200 ).send( topicStats );
 	res.end();
 }
 
