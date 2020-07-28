@@ -376,30 +376,21 @@ getConfirmedSubscriberAsCSV = async ( topicId ) => {
 //
 // @return; an HTML blob
 //
-exports.serveBulkForm = ( req, res, next ) => {
+exports.serveBulkForm = async ( req, res, next ) => {
 
 	// Params: accessCode, topicId
 	const { accessCode, topicId } = req.params;
+	
+	let bulkActionForm = await fsPromises.readFile('views/bulk.action.form.mustache', 'UTF-8');
 
-	res.status( 200 ).send( '<!DOCTYPE html>\n' +
-		'<html lang="en">\n' +
-		'<head>\n' +
-		'<title>Bulk action emails</title>\n' +
-		'</head>\n' +
-		'<body>\n' +
-		'	<form action="/api/v0.1/t-manager/' + accessCode + '/' + topicId + '/bulk/action" method="post">\n' +
-		'		<fieldset>\n' +  
-		'			<legend>Do you wish to subscribe or unsubscribe emails:</legend>\n' +   
-		'			<label><input name="action" type="radio" value="add"> Subscribe</label><br>\n' +
-		'			<label><input name="action" type="radio" value="remove"> Unsubscribe</label><br>\n' +
-		'		</fieldset><br><br>\n' + 
-		'		<label for="emails">List of emails to action (one email address per line):<br>\n' +
-		'		<textarea id="emails" name="emails" rows="25" cols="50" required></textarea><br>\n' +
-		'		<input type="submit" value="Submit">\n' +
-		'	</form>\n' +
-		'</body>\n' +
-		'</html>' 
+	bulkActionForm = mustache.render(bulkActionForm,
+							{
+								accessCode: accessCode,
+								topicId: topicId
+							}
 	);
+
+	res.status( 200 ).send(bulkActionForm);
 };
 
 //

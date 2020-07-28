@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Bulk Action Emails</title>
+	</head>
+	<body>
+		<form action="/api/v0.1/t-manager/{{accessCode}}/{{topicId}}/bulk/action" method="post">
+			<fieldset>
+				<legend>Do you wish to subscribe or unsubscribe emails:</legend>
+				<label><input name="action" type="radio" value="add"> Subscribe</label><br>
+				<label><input name="action" type="radio" value="remove"> Unsubscribe</label><br>
+			</fieldset><br><br>
+			<label for="emails">List of emails to action (one email address per line):<br>
+				<textarea id="emails" name="emails" rows="25" cols="50" required></textarea><br>
+				<input type="submit" value="Submit">
+		</form>
+	</body>
+</html>
