@@ -505,17 +505,15 @@ exports.actionBulk = async ( req, res, next ) => {
 		console.log( e );
 	});
 
-	// Send response and return a page with a successful message
-	res.status( 200 ).send( '<!DOCTYPE html>\n' +
-		'<html lang="en">\n' +
-		'<head>\n' +
-		'<title>Bulk emails action</title>\n' +
-		'</head>\n' +
-		'<body>\n' +
-		'	<p>Thank you, ' + action + ' emails list operation was successful.</p>\n' +
-		'</body>\n' +
-		'</html>' 
+	let bulkActionSuccess = await fsPromises.readFile('views/bulk.action.success.mustache', 'UTF-8');
+	bulkActionSuccess = mustache.render(bulkActionSuccess,
+							{
+								action: action
+							}
 	);
+
+	// Send response and return a page with a successful message
+	res.status( 200 ).send(bulkActionSuccess);
 };
 
 //
