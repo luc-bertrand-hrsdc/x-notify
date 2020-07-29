@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Topic Search Result</title>
+	</head>
+	<body>
+		<form action="/api/v0.1/t-manager/{{accessCode}}/{{topicId}}" method="PUT">
+			<h3>Update a Topic</h3><br>
+			<label>Topic Id:&nbsp;&nbsp;{{topicId}}</label><br><br>	
+			<table>
+				<tr><td>
+						<label for"notifyAPIKey">Notify API Key:</label><br>	
+						<input type="text" id="notifyAPIKey" name="put_notifyAPIKey" value="{{notifyKey}}"><br><br>
+						<label for"notifyTemplateId">Notify Template Id:</label><br>	
+						<input type="text" id="notifyTemplateId" name="put_notifyTemplateId" value="{{templateId}}"><br><br>
+						<label for"confSubLink">Confirmation Subscription Link:</label><br>	
+						<input type="text" id="confSubLink" name="put_confSubLink" value="{{confirmURL}}"><br><br>
+						<label for"confUnsubLink">Unsubscription Link:</label><br>	
+						<input type="text" id="confUnsubLink" name="put_confUnsubLink" value="{{unsubURL}}"><br><br>
+						<label for"thankYouUrl">Thank you URL:</label><br>	
+						<input type="text" id="thankYouUrl" name="put_thankYouUrl" value="{{thankURL}}"><br><br>
+						<label for"failureUrl">Server Error URL:</label><br>	
+						<input type="text" id="failureUrl" name="put_failureUrl" value="{{failURL}}"><br><br>
+						<label for"inputErrorUrl">Form Error URL:</label><br>	
+						<input type="text" id="inputErrorUrl" name="put_inputErrorUrl" value="{{inputErrURL}}"><br><br>
+					</td>
+					<td>
+						<div id="topic_details">{{{topicDetailsTemplate}}}</div>
+					</td>
+					<td>
+						<div id="smtp_config">{{{smtpConfigTemplate}}}</div>
+					</td>
+				</tr>
+			</table> 
+			<br>
+			<div>
+				<button name="update_topic">Modify</button>
+			</div>
+		</form>
+		<br/><br/><p>
+		<form action="/api/v0.1/t-manager/{{accessCode}}/{{topicId}}" method="DELETE">
+			<h3>Delete a Topic</h3><br/>
+			Delete the above topic entirely<br><br>
+			<button name="delete_topic">Delete</button>		
+		</form>
+
+		<script>
+
+			var putMethod = ( event ) => {
+				// Prevent redirection of Form Click
+				event.preventDefault();
+				var target = event.target;
+				while ( target.tagName != "FORM" ) {
+					target = target.parentElement;
+				} // Find the FORM tag
+
+				// Get the destination URL from FORM tag
+				var url = target.getAttribute( "action" );
+
+				// Collect Form Data from prefix "put_" on name attribute
+				var bodyForm = target.querySelectorAll( "[name^=put_]");
+				var body = {};
+				bodyForm.forEach( element => {
+					// I used split to separate prefix from worth name attribute
+					var nameArray = element.getAttribute( "name" ).split( "_" );
+					var name = nameArray[ nameArray.length - 1 ];
+
+					// all elements with name="put_*" has value registered in body object
+					body[ name ] = element.value;
+				}
+				);
+
+				var xhr = new XMLHttpRequest();
+				xhr.open( "PUT", url );
+				xhr.setRequestHeader( "Content-Type", "application/json" );
+				xhr.onload = () => {
+					if ( xhr.status === 200 ) {
+						var assignUrl = location.href.replace("topic?topicId=","").concat("/modSuccess");
+						location.assign(assignUrl);
+					} else {
+						console.log( xhr.status, xhr.responseText );
+					}
+				}
+				xhr.send(JSON.stringify(body));
+			}
+
+			var deleteMethod = ( event ) => {
+				event.preventDefault();
+				var confirm = window.confirm( "Are you sure you want to permanently delete this topic?" );
+				if ( confirm ) {
+					var target = event.target;
+					while ( target.tagName != "FORM" ) {
+						target = target.parentElement;
+					}
+				}
+				var url = target.getAttribute( "action" );
+				var xhr = new XMLHttpRequest();
+				xhr.open( "DELETE", url );
+				xhr.setRequestHeader( "Content-Type", "application/json" );
+				xhr.onload = () => {
+					if ( xhr.status === 200 ) {
+						location.assign(url.concat("/deleteSuccess"));
+					} else {
+						console.log( xhr.status, xhr.responseText );
+					}
+				}
+				xhr.send();
+			}
+
+			document.querySelectorAll( "[name=update_topic], [name=delete_topic]" ).forEach( element => {
+				var button = element;
+				var form = element;
+				while ( form.tagName != "FORM" ) {
+					form = form.parentElement;
+				}
+				var method = form.getAttribute( "method" );
+				if ( method == "PUT" ) {
+					button.addEventListener( "click", putMethod );
+				}else if( method ==  "DELETE"){
+					button.addEventListener( "click", deleteMethod);
+				}
+			} );
+		</script>
+	</body>
+</html>

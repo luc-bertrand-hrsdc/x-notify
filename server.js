@@ -129,7 +129,7 @@ MongoClient.connect( processEnv.MONGODB_URI || '', {useUnifiedTopology: true} ).
 		passport.authenticate('basic', { session: false }),
 		bodyParser.urlencoded({extended:false, limit: '10kb'}),
 		managersController.createTopic);
-	app.get('/api/v0.1/t-manager/:accessCode/:topicId',
+	app.get('/api/v0.1/t-manager/:accessCode/topic',
 		passport.authenticate('basic', { session: false }),
 		managersController.getTopic);
 	app.put('/api/v0.1/t-manager/:accessCode/:topicId',

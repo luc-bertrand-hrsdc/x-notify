@@ -649,11 +649,9 @@ exports.createTopic = async ( req, res, next ) => {
 };
 
 exports.getTopic = async ( req, res, next ) => {
-	
 	// Params: accessCode
 	const accessCode = req.params.accessCode;
-
-	let topicId = req.query.topicId;
+	const topicId = req.query.topicId;
 
 	let doc = await dbConn.collection( "topics" ).findOne(
 		{
@@ -706,130 +704,24 @@ exports.getTopic = async ( req, res, next ) => {
 							}
 		);
 
-		var html ='<!DOCTYPE html>\n' +
-			'<html lang="en">\n' +
-			'<head>\n' +
-			'<title>Topic Search Result</title>\n' +
-			'</head>\n' +
-			'<body>\n' +
-			'	<form action="/api/v0.1/t-manager/' + accessCode + '/' + topicId + '" method="PUT">\n' +
-			'		<h3>Update a Topic</h3><br>\n' +
-			'		<label>Topic Id:&nbsp;&nbsp;' + topicId + '</label><br><br>\n' +	
-			'		<table>\n' +
-			'			<tr><td>\n' +
-			'		<label for"notifyAPIKey">Notify API Key:</label><br>\n' +	
-			'		<input type="text" id="notifyAPIKey" name="put_notifyAPIKey" value="' + doc.notifyKey + '"><br><br>\n' +
-			'		<label for"notifyTemplateId">Notify Template Id:</label><br>\n' +	
-			'		<input type="text" id="notifyTemplateId" name="put_notifyTemplateId" value="' + doc.templateId + '"><br><br>\n' +
-			'		<label for"confSubLink">Confirmation Subscription Link:</label><br>\n' +	
-			'		<input type="text" id="confSubLink" name="put_confSubLink" value="' + doc.confirmURL + '"><br><br>\n' +
-			'		<label for"confUnsubLink">Unsubscription Link:</label><br>\n' +	
-			'		<input type="text" id="confUnsubLink" name="put_confUnsubLink" value="' + doc.unsubURL + '"><br><br>\n' +
-			'		<label for"thankYouUrl">Thank you URL:</label><br>\n' +	
-			'		<input type="text" id="thankYouUrl" name="put_thankYouUrl" value="' + doc.thankURL + '"><br><br>\n' +
-			'		<label for"failureUrl">Server Error URL:</label><br>\n' +	
-			'		<input type="text" id="failureUrl" name="put_failureUrl" value="' + doc.failURL + '"><br><br>\n' +
-			'		<label for"inputErrorUrl">Form Error URL:</label><br>\n' +	
-			'		<input type="text" id="inputErrorUrl" name="put_inputErrorUrl" value="' + doc.inputErrURL + '"><br><br>\n' +
-			'			</td>\n' +
-			'			<td>\n' +
-			'				<div id="topic_details">' + topicDetailsTemplate + '</div>\n' +
-			'			</td>\n' +
-			'			<td>\n' +
-			'				<div id="smtp_config">' + smtpConfigTemplate + '</div>\n' +
-			'			</td>\n' +
-			'			</tr>\n' +
-			'		</table>\n' + 
-			'		<br>\n' +
-			'		<div>\n' +
-			'			<button name="update_topic">Modify</button>\n' +
-			'		</div>\n' +
-			'	</form>\n' +
-			'	<br/><br/><p>\n' +
-			'	<form action="/api/v0.1/t-manager/' + accessCode + '/' + topicId + '" method="DELETE">\n' +
-			'		<h3>Delete a Topic</h3><br/>\n' +
-			'		Delete the above topic entirely<br><br>\n' +
-			'		<button name="delete_topic">Delete</button>\n' +		
-				'</form>\n' +
-				'<script>\n' +
-				'	\n' +   		
-				'	var putMethod = ( event ) => {\n' +
-				'		// Prevent redirection of Form Click\n' +
-				'		event.preventDefault();\n' +
-				'		var target = event.target;\n' +
-				'		while ( target.tagName != "FORM" ) {\n' +
-				'			target = target.parentElement;\n' +
-				'		} // Find the FORM tag\n' +
-				'		\n' +
-				'		// Get the destination URL from FORM tag\n' +
-				'		var url = target.getAttribute( "action" );\n' +
-				'		\n' +
-				'		// Collect Form Data from prefix "put_" on name attribute\n' +
-				'		var bodyForm = target.querySelectorAll( "[name^=put_]");\n' +
-				'		var body = {};\n' +
-				'		bodyForm.forEach( element => {\n' +
-				'				// I used split to separate prefix from worth name attribute\n' +
-				'				var nameArray = element.getAttribute( "name" ).split( "_" );\n' +
-				'				var name = nameArray[ nameArray.length - 1 ];\n' +
-				'				\n' +
-				'				// all elements with name="put_*" has value registered in body object\n' +
-				'				body[ name ] = element.value;\n' +
-				'			}\n' +
-				'		);\n' +
-				'		var xhr = new XMLHttpRequest();\n' +
-				'		xhr.open( "PUT", url );\n' +
-				'		xhr.setRequestHeader( "Content-Type", "application/json" );\n' +
-				'		xhr.onload = () => {\n' +
-				'			if ( xhr.status === 200 ) {\n' +
-				'				var assignUrl = location.href.replace("topic?topicId=","").concat("/modSuccess");\n' +
-				'				location.assign(assignUrl);\n' +
-				'			} else {\n' +
-				'				console.log( xhr.status, xhr.responseText );\n' +
-				'			}\n' +
-				'		}\n' +
-				'		xhr.send(JSON.stringify(body));\n' +
-				'	}\n' +
-				'	\n' +
-				'	var deleteMethod = ( event ) => {\n' +
-				'		event.preventDefault();\n' +
-				'		var confirm = window.confirm( "Are you sure you want to permantly delete this topic?" );\n' +
-				'		if ( confirm ) {\n' +
-				'			var target = event.target;\n' +
-				'			while ( target.tagName != "FORM" ) {\n' +
-				'				target = target.parentElement;\n' +
-				'			}\n' +
-				'		}\n' +
-				'		var url = target.getAttribute( "action" );\n' +
-				'		var xhr = new XMLHttpRequest();\n' +
-				'		xhr.open( "DELETE", url );\n' +
-				'		xhr.setRequestHeader( "Content-Type", "application/json" );\n' +
-				'		xhr.onload = () => {\n' +
-				'			if ( xhr.status === 200 ) {\n' +
-				'				location.assign(url.concat("/deleteSuccess"));\n' +
-			        '			} else {\n' +
-				'				console.log( xhr.status, xhr.responseText );\n' +
-				'			}\n' +
-				'		}\n' +
-				'		xhr.send();\n' +
-				'	}\n\n' +
-				'	document.querySelectorAll( "[name=update_topic], [name=delete_topic]" ).forEach( element => {\n' +
-				'		var button = element;\n' +
-				'		var form = element;\n' +
-				'		while ( form.tagName != "FORM" ) {\n' +
-				'			form = form.parentElement;\n' +
-				'		}\n' +
-				'		var method = form.getAttribute( "method" );\n' +
-				'		if ( method == "PUT" ) {\n' +
-				'			button.addEventListener( "click", putMethod );\n' +
-				'		}else if( method ==  "DELETE"){\n' +
-				'			button.addEventListener( "click", deleteMethod);\n' +
-				'		}\n' +
-			  	'	} );\n' +
-				'	\n' +
-				'</script>\n' +
-			'</body>\n' +
-			'</html>' ;
-		res.status( 200 ).send(html);
+		let updateTopic = await fsPromises.readFile('./views/topic.update.mustache', 'UTF-8');
+		updateTopic = mustache.render(updateTopic,
+							{
+								topicId: topicId,
+								notifyKey: doc.notifyKey,
+								templateId:doc.templateId,
+								confirmURL:doc.confirmURL,
+								unsubURL:doc.unsubURL,
+								thankURL:doc.thankURL,
+								failURL:doc.failURL,
+								inputErrURL:doc.inputErrURL,
+								topicDetailsTemplate:topicDetailsTemplate,
+								smtpConfigTemplate:smtpConfigTemplate,
+								accessCode:accessCode
+							}
+		);
+
+		res.status( 200 ).send(updateTopic);
 	}
 
 	res.end();
