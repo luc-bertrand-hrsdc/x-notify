@@ -571,7 +571,7 @@ exports.serveHome = async ( req, res, next ) => {
 	// Params: accessCode
 	const accessCode = req.params.accessCode;
 
-	var createTemplate = await fsPromises.readFile('views/createTopic.mustache', 'UTF-8');
+	var createTemplate = await fsPromises.readFile('views/topic.create.mustache', 'UTF-8');
 	var smtpTemplate = await fsPromises.readFile('views/smtpConfig.mustache', 'UTF-8');
 
 	createTemplate = mustache.render(createTemplate,
@@ -681,7 +681,7 @@ exports.getTopic = async ( req, res, next ) => {
 		
 		res.status( 200 ).send(topicNotFound);
 	}else{
-		var topicDetailsTemplate = await fsPromises.readFile('views/topic_details.mustache', 'UTF-8');
+		var topicDetailsTemplate = await fsPromises.readFile('views/topic.details.mustache', 'UTF-8');
 		topicDetailsTemplate = mustache.render(topicDetailsTemplate,
 							{
 								createdAt: topicDetails.createdAt,
@@ -783,50 +783,33 @@ exports.modifyTopic = async ( req, res, next ) => {
 	
 };
 
-exports.showModSuccess = ( req, res, next ) => {
+exports.showModSuccess = async ( req, res, next ) => {
 
 	// Params: accessCode
 	const accessCode = req.params.accessCode;
 
-	res.status( 200 ).send( '<!DOCTYPE html>\n' +
-		'<html lang="en">\n' +
-		'<head>\n' +
-		'<title>Topic Management Home</title>\n' +
-		'</head>\n' +
-		'<body>\n' +
-		'	<p>Thank you, ' + ' topic properties updated successfully.</p>\n' +
-		'	<p>\n' +
-		'	<form action="/api/v0.1/t-manager/' + accessCode + '/topic" method="get">\n' +
-		'		<label for"topicId">Topic Id:</label><br>\n' +	
-		'		<input type="text" id="topicId" name="topicId" required><br><br>\n' +
-		'		<input type="submit" value="GET">\n' +
-		'	</form>\n' +
-		'</body>\n' +
-		'</html>' 
+	let updateSuccess = await fsPromises.readFile('./views/topic.update.success.mustache', 'UTF-8');
+	updateSuccess = mustache.render(updateSuccess,
+								{
+									accessCode: accessCode
+								}
 	);
+
+	res.status( 200 ).send(updateSuccess);
 }
 
-exports.showDeleteSuccess = ( req, res, next ) => {
+exports.showDeleteSuccess = async ( req, res, next ) => {
 
 	// Params: accessCode
 	const accessCode = req.params.accessCode;
 
-	res.status( 200 ).send( '<!DOCTYPE html>\n' +
-		'<html lang="en">\n' +
-		'<head>\n' +
-		'<title>Topic Management Home</title>\n' +
-		'</head>\n' +
-		'<body>\n' +
-		'	<p>Topic successfully deleted.</p>\n' +
-		'	<p>\n' +
-		'	<form action="/api/v0.1/t-manager/' + accessCode + '/topic" method="get">\n' +
-		'		<label for"topicId">Topic Id:</label><br>\n' +	
-		'		<input type="text" id="topicId" name="topicId" required><br><br>\n' +
-		'		<input type="submit" value="GET">\n' +
-		'	</form>\n' +
-		'</body>\n' +
-		'</html>' 
+	let deleteSuccess = await fsPromises.readFile('./views/topic.delete.success.mustache', 'UTF-8');
+	deleteSuccess = mustache.render(deleteSuccess,
+								{
+									accessCode: accessCode
+								}
 	);
+	res.status( 200 ).send(deleteSuccess);
 }
 
 exports.deleteTopic = async ( req, res, next ) => {
