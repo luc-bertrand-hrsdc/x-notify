@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Topic Management Home</title>
+	</head>
+	<body>
+		<p>Thank you, topic properties updated successfully.</p>
+		<p>
+		<form action="/api/v0.1/t-manager/{{accessCode}}/topic" method="get">
+			<label for"topicId">Topic Id:</label><br>
+			<input type="text" id="topicId" name="topicId" required><br><br>
+			<input type="submit" value="GET">
+		</form>
+	</body>
+</html> 
